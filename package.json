@@ -1,0 +1,21 @@
+{
+  "name": "it122",
+  "version": "1.0.0",
+  "description": "it122 demo application",
+  "main": "index.js",
+  "devDependencies": {},
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/estaciwo/it122.git"
+  },
+  "author": "eric staciwo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/estaciwo/it122/issues"
+  },
+  "homepage": "https://github.com/estaciwo/it122#readme"
+}
