@@ -1,0 +1,17 @@
+body {
+  background-color: lightblue; 
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: purple;
+}
+
+h1 em {
+  color: orange;
+}
+
+ul {
+  font-size: 125%;
+  list-style: none;
+}
