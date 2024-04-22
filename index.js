@@ -1,4 +1,4 @@
-import {createExp, getItem, getAll} from './data.js';
+import {createExp, getAll, getItem } from './data.js';
 
 createExp();
 getAll();

@@ -1,20 +1,16 @@
 import express from "express";
+import { Album } from "./models/Album.js"; // added 4/21
 
 const app = express();
 
-const albums = [
-  { title: "A Love Supreme", artist: "John Coltrane", year: "1965", label: "Impulse!", id: 1},
-  { title: "In Greenwich Village", artist: "Albert Ayler", year: "1967", label: "Impulse!", id: 2},
-  { title: "Black Woman", artist: "Sonny and Linda Sharrock", year: "1969", label: "Vortex", id: 3},
-  { title: "Unit Structures", artist: "Cecil Taylor", year: "1966", label: "Blue Note", id: 4 },
-  { title: "A Monastic Trio", artist: "Alice Coltrane", year: "1968", label: "Impulse!", id: 5},
-  { title: "Free Jazz", artist: "Ornette Coleman", year: "1961", label: "Atlantic", id: 6 }
-];
-
 const getAll = () => {
-  app.get("/", (req, res) => {
-    console.log(req.url);
-    res.render("home", { albums });
+
+    app.get('/', (req, res, next) => {
+        Album.find({}).lean()
+          .then((albums) => {
+            res.render('home', { albums });
+          })
+          .catch(err => next(err))
   });
 };
 
@@ -28,11 +24,13 @@ const createExp = () => {
 };
 
 const getItem = () => {
-  app.get("/albums/:id", (req, res) => {
-    let album = albums.find((album) => album.id == req.params.id);
-    if (album) {
-      res.render("detail", { album });
-    }
+
+  app.get("/albums/:title", (req,res,next) => {
+      Album.findOne({ title:req.params.title }).lean()
+          .then((album) => {
+              res.render('detail', { result: album } );
+          })
+          .catch(err => next(err));
   });
 };
 
