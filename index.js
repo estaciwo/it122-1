@@ -1,5 +1,9 @@
-import {createExp, getAll, getItem } from './data.js';
+import { createExp, getAll, getItem, addAlbum, updateAlbum, deleteAlbum } from "./data.js";
+
 
 createExp();
 getAll();
 getItem();
+addAlbum();
+updateAlbum();
+deleteAlbum();
