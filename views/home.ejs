@@ -1,13 +1,36 @@
 <!DOCTYPE html>
-  <head>
-    <link rel="stylesheet" href="../styles.css">
-  </head>
-  <body>
-      <h1>1960s Avant-Garde Jazz Albums</h1>
-    <ul>
-     <% albums.forEach((album) => { %>
-      <li><a href="/albums/<%= album.title %>"> <%= album.title %> </a></li>
-     <% }); %>
-    </ul>
-  </body>
+
+<html>
+<head>
+  <link rel="stylesheet" href="../styles.css">
+    <title>React App Demo</title>
+
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+    <!-- Don't use this in production: -->
+    <script     src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+</head>
+
+<body>
+
+<div id="root"></div> 
+
+  <script type="text/babel">
+    let doggy = <%- kitty %>;
+      ReactDOM.render(
+        <div>
+          <h1>Albums</h1>
+          <ul>
+            {doggy.map(album => (
+              <li key={album._id}><a href={`/api/albums/${album.title}`}>{album.title}</a></li>
+            ))}
+          </ul>
+        </div>,
+        document.getElementById('root')
+      );
+ 
+</script>
+</body>
 </html>

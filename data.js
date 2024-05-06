@@ -6,6 +6,7 @@ const app = express();
 
 import cors from 'cors';
 app.use('/api', cors());
+
 app.use(express.json());
 
 const createExp = () => {
@@ -18,25 +19,29 @@ const createExp = () => {
 };
 
 const getAll = () => {
+
   app.get('/api/albums', (req,res) => {
-      Album.find({}).lean()
-        .then((albums) => {
-          res.json(albums);
-        })
-        .catch(err =>  {
-          res.status(500).send('Database Error occurred');
-        })
+    Album.find({}).lean()
+    .then((albums) => {
+        res.render('home', {kitty: JSON.stringify(albums)});
+      console.log("Testing albums");
+    })
+    .catch(err =>  {
+        res.status(500).send('Database Error occurred');
+    })
   });
 };
 
 const getItem = () => {
   app.get('/api/albums/:title', (req,res) => {
+    
       Album.findOne({ title:req.params.title }).lean()
           .then((album) => {
-             res.json(album);
+            res.render('detail', { result: JSON.stringify(album) });
+            console.log("Testing individual");
           })
           .catch(err => {
-              res.status(500).send('Database Error     occurred');
+              res.status(500).send('Database Error occurred');
           });
   });
 };
