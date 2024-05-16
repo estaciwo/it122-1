@@ -14,23 +14,79 @@
 </head>
 
 <body>
+<div id="root"></div>
+<script type="text/babel">
 
-<div id="root"></div> 
+  let albums = <%- albumData %>;
 
-  <script type="text/babel">
-    let doggy = <%- kitty %>;
-      ReactDOM.render(
-        <div>
-          <h1>Albums</h1>
-          <ul>
-            {doggy.map(album => (
-              <li key={album._id}><a href={`/api/albums/${album.title}`}>{album.title}</a></li>
-            ))}
-          </ul>
-        </div>,
-        document.getElementById('root')
-      );
- 
+    
+const AlbumGroup = (props) => {
+  const albumList = props.albums.map((album) => <li key={album._id} onClick={props.clickHandler}>{album.title}</li>);
+  return <ul>{albumList}</ul>
+}
+
+
+  const Detail = (props) => {
+    return (
+      <div>
+      <h2>Album details:</h2>
+        {props.item &&
+          <form>
+            <b>Title:</b> <input type="text" name="title" onChange={props.changeHandler} value={props.item.title || ''} />
+            <b>Artist:</b> <input type="text" name="artist" onChange={props.changeHandler} value={props.item.artist || ''} />
+            <b>Year:</b> <input type="text" name="year" onChange={props.changeHandler} value={props.item.year || ''} />
+            <b>Label:</b> <input type="text" name="label" onChange={props.changeHandler} value={props.item.label || ''} />
+            <button type="button" onClick= {props.clearHandler}>Clear</button>
+          </form>
+        }
+        </div>
+    )
+  }
+
+const App = () => {
+
+  const [items, setItems] = React.useState(albums);
+  const [selectedItem, setSelectedItem] = React.useState();
+  
+  const itemClicked = (e) => {
+    let found = albums.find((item) => { return item.title == e.target.innerText });
+  setSelectedItem(found);
+  }
+
+  const itemChanged = (e) => {
+    let field = e.target.name;
+    let newItem = { ...selectedItem };
+    newItem[field] = e.target.value;
+
+    let newItems = items.filter(item => item.name != newItem.name)
+    console.log(newItems)
+    setSelectedItem(newItem);
+  
+  }
+
+  const clearFields = () => {
+    setSelectedItem({
+      title: "",
+      artist: "",
+      year: "",
+      label: ""
+    });
+  };
+
+  return (
+    <div>
+      <h1>Classic Avant-Garde Jazz Albums</h1>
+      <AlbumGroup albums={items} clickHandler={itemClicked}/>
+      <hr />
+      <Detail item={selectedItem} changeHandler={itemChanged} clearHandler={clearFields}/>
+    </div>
+    );
+  }
+  
+ReactDOM.render(<App />, document.getElementById("root"));
+
 </script>
 </body>
 </html>
+
+
