@@ -17,74 +17,47 @@ const createExp = () => {
   });
 };
 
-// everything above here is canon
+// MAY19
+app.get('/', (req, res) => {
+  res.render('home');
+});
 
-// getAll - old version: 
-// app.get('/', (req, res, next) => {
-//   Album.find({}).lean()
-//   .then((albums) => {
-//     res.render('home', { albums });
-//   })
-//   .catch(err => next(err));
-// });
-
-// MAY15 - getAll API
+// MAY19
 const getAll = () => {
-  app.get('/api/albums', (req,res) => {
+  app.get('/api/albums', (req, res) => {
     Album.find({}).lean()
-    .then((albums) => {
-        res.render('home', {albumData: JSON.stringify(albums)});
-      console.log("Testing albums");
-    })
-    .catch(err =>  {
+      .then((albums) => {
+        res.json(albums);
+        console.log("Getting albums");
+      })
+      .catch(err => {
         res.status(500).send('Database Error occurred');
-    })
+      });
   });
 };
 
-// MAY15 
-// const getItem = () => {
-//   app.get('/api/albums/', (req,res) => {
-//       Album.findOne({ title:req.params.title }).lean()
-//           .then((album) => {
-//             res.render('home', { result: JSON.stringify(album) });
-//             console.log("Testing individual");
-//           })
-//           .catch(err => {
-//               res.status(500).send('Database Error occurred');
-//           });
-//   });
-// };
+// MAY19
+const saveOrUpdateAlbum = () => {
+  app.post('/api/albums', (req, res) => {
+    const filter = { _id: req.body._id || new mongoose.Types.ObjectId() };
+    const update = req.body;
+    const options = { new: true, upsert: true, setDefaultsOnInsert: true };
 
+    Album.findOneAndUpdate(filter, update, options)
+      .then(album => res.json(album))
+      .catch(err => res.status(500).send('Database Error occurred'));
+  });
+};
 
-// MAY15 - new upsert
-// const upsertAlbum = () => {
-
-//   const newAlbum = {'title':'Hip Harp', 'artist':'Dorothy Ashby', 'year': 1958, 'label': 'Prestige' }
-
-//   Album.updateOne({ title: newAlbum.title}, newAlbum, {upsert:true})
-//   .then(result => console.log(result))
-//   .catch(err => console.log(err));
-// }
-
-// const deleteAlbum = () => {
-//   app.delete('/api/albums/:id', (req, res) => {
-//     const albumId = req.params.id;
-//     Album.findByIdAndDelete(albumId)
-//       .then(album => {
-//         if (!album) {
-//           return res.status(404).send('Album not found');
-//         }
-//         res.json({ message: 'Album deleted!', album });
-//       })
-//       .catch(err => {
-//         res.status(500).send('Album delete failed');
-//       });
-//   });
-// };
+const deleteAlbum = () => {
+  app.delete('/api/albums/:id', (req, res) => {
+    Album.findByIdAndDelete(req.params.id)
+      .then(() => res.status(204).send())
+      .catch(err => res.status(500).send('Database Error occurred'));
+  });
+};
 
 createExp();
 getAll();
-// getItem(); 
-// upsertAlbum(); 
-// deleteAlbum();
+saveOrUpdateAlbum();
+deleteAlbum();
