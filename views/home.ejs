@@ -17,14 +17,10 @@
 <div id="root"></div>
 <script type="text/babel">
 
-  let albums = <%- albumData %>;
-
-    
 const AlbumGroup = (props) => {
   const albumList = props.albums.map((album) => <li key={album._id} onClick={props.clickHandler}>{album.title}</li>);
   return <ul>{albumList}</ul>
 }
-
 
   const Detail = (props) => {
     return (
@@ -35,8 +31,12 @@ const AlbumGroup = (props) => {
             <b>Title:</b> <input type="text" name="title" onChange={props.changeHandler} value={props.item.title || ''} />
             <b>Artist:</b> <input type="text" name="artist" onChange={props.changeHandler} value={props.item.artist || ''} />
             <b>Year:</b> <input type="text" name="year" onChange={props.changeHandler} value={props.item.year || ''} />
-            <b>Label:</b> <input type="text" name="label" onChange={props.changeHandler} value={props.item.label || ''} />
+            <b>Label:</b> <input type="text" name="label" onChange={props.changeHandler} value={props.item.label || ''} />  
+
+
+            <button type="button" onClick={props.saveHandler}>Save</button>
             <button type="button" onClick= {props.clearHandler}>Clear</button>
+            <button type="button" onClick={props.deleteHandler}>Delete</button>
           </form>
         }
         </div>
@@ -45,12 +45,29 @@ const AlbumGroup = (props) => {
 
 const App = () => {
 
-  const [items, setItems] = React.useState(albums);
+  // MAY19
+  const [items, setItems] = React.useState([]);
   const [selectedItem, setSelectedItem] = React.useState();
-  
+
+  // MAY19
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/albums');
+        const data = await response.json();
+        setItems(data);
+      } catch (error) {
+        console.error('Data retrieval error:', error);
+      }
+    };
+    // MAY19
+    fetchData();
+  }, []);
+
+  // MAY19
   const itemClicked = (e) => {
-    let found = albums.find((item) => { return item.title == e.target.innerText });
-  setSelectedItem(found);
+    let found = items.find((item) => item.title === e.target.innerText);
+    setSelectedItem(found);
   }
 
   const itemChanged = (e) => {
@@ -58,9 +75,9 @@ const App = () => {
     let newItem = { ...selectedItem };
     newItem[field] = e.target.value;
 
-    let newItems = items.filter(item => item.name != newItem.name)
-    console.log(newItems)
+    // MAY19
     setSelectedItem(newItem);
+    setItems(prevItems => prevItems.map(item => item._id === newItem._id ? newItem : item));
   
   }
 
@@ -73,12 +90,63 @@ const App = () => {
     });
   };
 
+  // MAY19
+  const saveHandler = async () => {
+    if (!selectedItem) return;
+
+    try {
+      const response = await fetch(`/api/albums`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(selectedItem)
+      });
+
+      if (response.ok) {
+        const savedItem = await response.json();
+        setItems(prevItems => {
+          if (selectedItem._id) {
+            return prevItems.map(item => item._id === savedItem._id ? savedItem : item);
+          } else {
+            return [...prevItems, savedItem];
+          }
+        });
+        setSelectedItem(savedItem);
+      } else {
+        console.error('Save error:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+    }
+  };
+
+  // MAY19
+  const deleteHandler = async () => {
+    if (!selectedItem || !selectedItem._id) return;
+
+    try {
+      const response = await fetch(`/api/albums/${selectedItem._id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setItems(prevItems => prevItems.filter(item => item._id !== selectedItem._id));
+        clearFields();
+      } else {
+        console.error('Deletion error:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Deletion error:', error);
+    }
+  };
+  
   return (
     <div>
       <h1>Classic Avant-Garde Jazz Albums</h1>
       <AlbumGroup albums={items} clickHandler={itemClicked}/>
       <hr />
-      <Detail item={selectedItem} changeHandler={itemChanged} clearHandler={clearFields}/>
+      <Detail item={selectedItem} changeHandler={itemChanged} saveHandler={saveHandler} clearHandler={clearFields} deleteHandler={deleteHandler} />
     </div>
     );
   }
