@@ -1,63 +1,77 @@
 import express from "express";
 import { Album } from "./models/Album.js";
-
 const app = express();
+
+app.set("port", process.env.PORT || 3000);
+app.use(express.static("public"));
+app.use(express.urlencoded());
+app.use(express.json());
 
 import cors from 'cors';
 app.use('/api', cors());
 
-app.use(express.json());
+app.set("view engine", "ejs");
 
-const createExp = () => {
-  app.set("port", process.env.PORT || 3000);
-  app.use(express.static("public"));
-  app.set("view engine", "ejs");
-  app.listen(app.get("port"), () => {
-    console.log("Express started");
-  });
-};
-
-// MAY19
 app.get('/', (req, res) => {
   res.render('home');
 });
 
-// MAY19
-const getAll = () => {
-  app.get('/api/albums', (req, res) => {
+app.get('/detail', (req,res,next) => {
+    Album.findOne({ title:req.query.title }).lean()
+        .then((album) => {
+            res.render('details', {result: album} );
+        })
+        .catch(err => next(err));
+});
+
+app.get('/about', (req,res) => {
+    res.type('text/html');
+    res.render('about');
+});
+
+app.get('/api/v1/albums/:title', (req, res, next) => {
+    let title = req.params.title;
+    Album.findOne({title: title}, (err, result) => {
+        if (err || !result) return next(err);
+        res.json( result );    
+    });
+});
+
+app.get('/api/v1/albums', (req,res, next) => {
     Album.find({}).lean()
-      .then((albums) => {
+    .then((albums) => {
         res.json(albums);
-        console.log("Getting albums");
-      })
-      .catch(err => {
-        res.status(500).send('Database Error occurred');
-      });
-  });
-};
+    })
+    .catch(err => next(err));
+});
 
-// MAY19
-const saveOrUpdateAlbum = () => {
-  app.post('/api/albums', (req, res) => {
-    const filter = { _id: req.body._id || new mongoose.Types.ObjectId() };
-    const update = req.body;
-    const options = { new: true, upsert: true, setDefaultsOnInsert: true };
+app.get('/api/v1/delete/:id', (req,res, next) => {
+    Album.deleteOne({"_id":req.params.id }).lean()
+    .then((result) => {
+        res.json({"deleted": result});
+    })
+    .catch(err => next(err));
+});
 
-    Album.findOneAndUpdate(filter, update, options)
-      .then(album => res.json(album))
-      .catch(err => res.status(500).send('Database Error occurred'));
-  });
-};
+app.post('/api/v1/add/', (req,res, next) => {
+    if (!req.body._id) { 
+        Album.create(req.body).then(result => res.json(result))
+        .catch(err => res.json({"error": err}));
+    } else { 
+        Album.updateOne({ _id: req.body._id}, req.body, {upsert:true})
+        .then(result => res.json(result))
+        .catch(err => res.json({"error": err}));
+    }
+});
 
-const deleteAlbum = () => {
-  app.delete('/api/albums/:id', (req, res) => {
-    Album.findByIdAndDelete(req.params.id)
-      .then(() => res.status(204).send())
-      .catch(err => res.status(500).send('Database Error occurred'));
-  });
-};
+app.use((req,res) => {
+    res.type('text/plain'); 
+    res.status(404);
+    res.send('404 - Not found');
+});
 
-createExp();
-getAll();
-saveOrUpdateAlbum();
-deleteAlbum();
+app.listen(app.get('port'), () => {
+  console.log('Express started');
+});
+
+

@@ -2,159 +2,141 @@
 
 <html>
 <head>
+  <meta charset="utf-8">
   <link rel="stylesheet" href="../styles.css">
-    <title>React App Demo</title>
+  <title>React App Demo</title>
 
-    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-
-    <!-- Don't use this in production: -->
-    <script     src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!--  don't use this in production -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 
 <body>
-<div id="root"></div>
-<script type="text/babel">
+  <h1>1960s Avant-Garde Jazz Albums</h1>
+  <div id="root"></div>
 
-const AlbumGroup = (props) => {
-  const albumList = props.albums.map((album) => <li key={album._id} onClick={props.clickHandler}>{album.title}</li>);
-  return <ul>{albumList}</ul>
-}
+  <script type="text/babel">
 
-  const Detail = (props) => {
-    return (
-      <div>
-      <h2>Album details:</h2>
-        {props.item &&
-          <form>
-            <b>Title:</b> <input type="text" name="title" onChange={props.changeHandler} value={props.item.title || ''} />
-            <b>Artist:</b> <input type="text" name="artist" onChange={props.changeHandler} value={props.item.artist || ''} />
-            <b>Year:</b> <input type="text" name="year" onChange={props.changeHandler} value={props.item.year || ''} />
-            <b>Label:</b> <input type="text" name="label" onChange={props.changeHandler} value={props.item.label || ''} />  
-
-
-            <button type="button" onClick={props.saveHandler}>Save</button>
-            <button type="button" onClick= {props.clearHandler}>Clear</button>
-            <button type="button" onClick={props.deleteHandler}>Delete</button>
-          </form>
-        }
-        </div>
-    )
-  }
-
-const App = () => {
-
-  // MAY19
-  const [items, setItems] = React.useState([]);
-  const [selectedItem, setSelectedItem] = React.useState();
-
-  // MAY19
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/albums');
-        const data = await response.json();
-        setItems(data);
-      } catch (error) {
-        console.error('Data retrieval error:', error);
-      }
+    const ItemList = (props) => {
+      const listItems = props.data.map((item) =>
+        <li key={item._id} id={item._id} onClick={props.clickHandler}>
+          {item.title}
+        </li>);
+      return <ul>{listItems}</ul>;
     };
-    // MAY19
-    fetchData();
-  }, []);
 
-  // MAY19
-  const itemClicked = (e) => {
-    let found = items.find((item) => item.title === e.target.innerText);
-    setSelectedItem(found);
-  }
+    const ItemDetail = (props) => {
+      return <div>
+        <hr />
+        <h3><em>Album details:</em></h3>
+        <form>
+          title: <input type="text" name="title" value={props.item.title || ""} onChange={props.handleChange} /><br />
+          artist: <input type="text" name="artist" value={props.item.artist || ""} onChange={props.handleChange} /><br />
+          year: <input type="text" name="year" value={props.item.year || ""} onChange={props.handleChange} /><br />
+          label: <input type="text" name="label" value={props.item.label || ""} onChange={props.handleChange} /><br />
+          ID: <input type="text" name="id" value={props.item._id || ""} readOnly /><br />
+        </form>
+        <button name="save" onClick={props.saveItem}>Save</button>&nbsp;
+        <button name="clear" onClick={props.clearForm}>Clear</button>&nbsp;
+        <button name="delete" onClick={props.deleteItem}>Delete</button>&nbsp;
+      </div>
+    };
 
-  const itemChanged = (e) => {
-    let field = e.target.name;
-    let newItem = { ...selectedItem };
-    newItem[field] = e.target.value;
+    const App = () => {
+      const [items, setItems] = React.useState([]);
+      const [currentItem, setCurrentItem] = React.useState({});
+      const [formItem, setFormItem] = React.useState({});
 
-    // MAY19
-    setSelectedItem(newItem);
-    setItems(prevItems => prevItems.map(item => item._id === newItem._id ? newItem : item));
-  
-  }
-
-  const clearFields = () => {
-    setSelectedItem({
-      title: "",
-      artist: "",
-      year: "",
-      label: ""
-    });
-  };
-
-  // MAY19
-  const saveHandler = async () => {
-    if (!selectedItem) return;
-
-    try {
-      const response = await fetch(`/api/albums`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(selectedItem)
-      });
-
-      if (response.ok) {
-        const savedItem = await response.json();
-        setItems(prevItems => {
-          if (selectedItem._id) {
-            return prevItems.map(item => item._id === savedItem._id ? savedItem : item);
-          } else {
-            return [...prevItems, savedItem];
+      React.useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const response = await fetch("/api/v1/albums");
+            const data = await response.json();
+            setItems(data);
+          } catch (error) {
+            console.error("Error fetching data:", error);
           }
-        });
-        setSelectedItem(savedItem);
-      } else {
-        console.error('Save error:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-    }
-  };
+        };
+        fetchData();
+      }, []);
 
-  // MAY19
-  const deleteHandler = async () => {
-    if (!selectedItem || !selectedItem._id) return;
+      const selectItem = (event) => {
+        const found = items.find((item) => item._id === event.target.id);
+        setCurrentItem(found);
+        setFormItem(found);
+      };
 
-    try {
-      const response = await fetch(`/api/albums/${selectedItem._id}`, {
-        method: 'DELETE'
-      });
+      const clearForm = () => {
+        setFormItem({});
+      };
 
-      if (response.ok) {
-        setItems(prevItems => prevItems.filter(item => item._id !== selectedItem._id));
-        clearFields();
-      } else {
-        console.error('Deletion error:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Deletion error:', error);
-    }
-  };
-  
-  return (
-    <div>
-      <h1>Classic Avant-Garde Jazz Albums</h1>
-      <AlbumGroup albums={items} clickHandler={itemClicked}/>
-      <hr />
-      <Detail item={selectedItem} changeHandler={itemChanged} saveHandler={saveHandler} clearHandler={clearFields} deleteHandler={deleteHandler} />
-    </div>
-    );
-  }
-  
-ReactDOM.render(<App />, document.getElementById("root"));
+      const saveItem = () => {
+        if (!formItem.title || formItem.title.trim() === "") {
+          alert("Title field cannot be empty.");
+          return;
+        }
 
-</script>
+        fetch("/api/v1/add/", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formItem)
+        })
+          .then(res => res.json())
+          .then((data) => {
+            if (!formItem._id) {
+              formItem._id = data._id;
+              let newItems = [...items, formItem];
+              setItems(newItems);
+            } else {
+              let updatedItems = items.map(item => item._id === formItem._id ? formItem : item);
+              setItems(updatedItems);
+            }
+            setCurrentItem(formItem);
+          });
+      };
+
+      const deleteItem = () => {
+        let id = currentItem._id;
+        const title = currentItem.title;
+
+        fetch(`/api/v1/delete/${id}`)
+          .then(res => res.json())
+          .then((data) => {
+            if (data.deleted && data.deleted.deletedCount > 0) {
+              const newItems = items.filter(item => item._id !== id);
+              setItems(newItems);
+              setCurrentItem({});
+              setFormItem({});
+            }
+          });
+      };
+
+      const handleChange = (event) => {
+        let newItem = { ...formItem };
+        newItem[event.target.name] = event.target.value;
+        setFormItem(newItem);
+      };
+
+      return (
+        <div>
+          <h2>Albums Inventory</h2>
+          <ItemList data={items} clickHandler={selectItem} />
+          <ItemDetail
+            item={formItem}
+            handleChange={handleChange}
+            clearForm={clearForm}
+            saveItem={saveItem}
+            deleteItem={deleteItem}
+          />
+        </div>
+      );
+    };
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+
+  </script>
 </body>
 </html>
-
-
